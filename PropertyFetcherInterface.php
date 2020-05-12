@@ -6,11 +6,11 @@
 			
 		public function getProperty();
 
-		public function checkIfpropertyUpdated($lastUpdatedDate);
+		public function checkIfpropertyUpdated($lastUpdatedDate,$propertId,$tableName);
 
 		public function convertToArray($data);
 
-		public function MapProperties();
+		public function MapPropertyRecords($listingArray,$listingType);
 		
 		public function updateProperties();
 

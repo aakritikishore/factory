@@ -10,7 +10,7 @@ class HomeAway implements PropertyFetcherInterface
 		return "HOMEAWAY";
 	}
 
-	public function checkIfpropertyUpdated($lastUpdatedDate){
+	public function checkIfpropertyUpdated($lastUpdatedDate,$propertyId,$tableName){
 		return true;
 	}
 
@@ -18,7 +18,7 @@ class HomeAway implements PropertyFetcherInterface
 		return "An array";
 	}
 
-	public function MapProperties() {
+	public function MapPropertyRecords($listingArray,$listingType) {
 		return "mapped";
 	}
 	
