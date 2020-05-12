@@ -21,11 +21,8 @@ class HomeAway implements PropertyFetcherInterface
 	public function MapPropertyRecords($listingArray,$listingType) {
 		return "mapped";
 	}
-	
-	public function updateProperties(){
-		return true;
-	}
 }
+
 
 ?>
 

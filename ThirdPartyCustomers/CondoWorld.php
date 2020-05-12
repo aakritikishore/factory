@@ -35,7 +35,7 @@
 			//Get array with record_status like existing/new.
 			$rateListingArray = $this->checkRecordType($rateListing,'property_rate_date');
 			//for($i=0; $i = count($newListingArray); $i++) {
-			for($i=0; $i < 1; $i++) {
+			for($i=0; $i < 2; $i++) {
 				if($rateListingArray[$i]['record_status'] == "new"){
 					//Get new Records
 					$newrecordsDescriptions= $this-> getPropertyDescription($rateListingArray[$i]['url']);
@@ -50,12 +50,6 @@
 				}
 
 			}
-
-			//Get Availablity Listing
-			/*$availablityListing = $this-> getListing('https://www.condo-world.com/CIO/xmladvertiserAvailabilityContentIndex.ashx','unitAvailabilityContentIndexEntry','unitAvailabilityContentUrl','lastUpdatedDate');
-			$availablityListingDetail = $this->getDetail($availablityListing);
-			return $availablityListingDetail;*/
-
 		}
 
 		public function callingApi($url) {
@@ -131,7 +125,6 @@
 		}
 
 		public function mapPropertyRecords($listingArray,$listingType) {
-	       
 		   $property['CompanyID'] = 76;
 		   $property['Destination'] =  $listingArray['adContent']['headline']['texts']['text']['textValue'];
 		   $property['Name'] = $listingArray['adContent']['propertyName']['texts']['text']['textValue'];
@@ -206,9 +199,24 @@
 		   $property['date_added'] = date("Y-m-d h:i:s",time());
 		   $property['last_updated'] = date("Y-m-d h:i:s",time());
 		   if($listingType == "new"){
-		   		$propertyModel->addProperty($property); 
+		   		$propertyId = $propertyModel->addProperty($property); 
 		   }elseif($listingType == "existing"){
 		   		$propertyModel->updateProperty($property,$property['external_id']); 
+		   }
+		   for($i = 0; $i < count($listingArray['images']['image']); $i++){
+		   		$propertyPhotos['PropertyID'] =  $propertyId;
+		   		$propertyPhotos['FileName'] = $listingArray['images']['image'][$i]['uri'];
+		   		$propertyPhotos['SortOrder'] =  0;
+		   		if($i == 0){
+		   			$propertyPhotos['Primary'] =  1;
+		   		}else {
+		   			$propertyPhotos['Primary'] =  0;
+		   		}
+		   		//check if image exist & if not exist then add 
+		   		$existingImages = $propertyModel->getImages($propertyPhotos);
+		   		if(empty($existingImage['result'])) {
+		   			$propertyModel->addPropertyPhotos($propertyPhotos);
+		   		}	
 		   }
 
 		}

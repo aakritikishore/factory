@@ -21,6 +21,15 @@
 
 		}
 
+		public function addPropertyPhotos($array) {
+
+			$qry = "INSERT INTO property_photos(`PropertyID`, `FileName`, `SortOrder`, `Primary`) VALUES ('".$array['PropertyID']."','" .$array['FileName']."','" .$array['SortOrder']."','".$array['Primary']."');";
+
+			$result = $this->databaseInterface->query($qry,true);
+			return $result;
+
+		}
+
 		public function addPropertyRateDate($array) {
 			
 			$qry = "INSERT INTO property_rate_date(PropertyID, external_id, StartDate, EndDate) VALUES ('".$array['PropertyID']."','" .$array['external_id']."','" .$array['StartDate']."','".$array['EndDate']."');";
@@ -94,6 +103,13 @@
 			
 			return $result;
 
+		}
+
+		public function getImages($array){
+
+			$qry = "SELECT * from property_photos where FileName = '".$array['FileName']."' and PropertyID = '".$array['PropertyID']."';";
+			$result = $this->databaseInterface->query($qry,true);
+			return $result;
 		}
 
 		public function getExternalIds($tableName) {
