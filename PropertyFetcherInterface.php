@@ -12,8 +12,6 @@
 
 		public function MapPropertyRecords($listingArray,$listingType);
 		
-		public function updateProperties();
-
 	}
 	
 ?>			

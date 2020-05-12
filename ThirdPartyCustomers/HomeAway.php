@@ -22,9 +22,6 @@ class HomeAway implements PropertyFetcherInterface
 		return "mapped";
 	}
 	
-	public function updateProperties(){
-		return true;
-	}
 }
 
 ?>

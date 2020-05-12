@@ -52,9 +52,7 @@
 			}
 
 			//Get Availablity Listing
-			/*$availablityListing = $this-> getListing('https://www.condo-world.com/CIO/xmladvertiserAvailabilityContentIndex.ashx','unitAvailabilityContentIndexEntry','unitAvailabilityContentUrl','lastUpdatedDate');
-			$availablityListingDetail = $this->getDetail($availablityListing);
-			return $availablityListingDetail;*/
+			//Code goes here..
 
 		}
 
