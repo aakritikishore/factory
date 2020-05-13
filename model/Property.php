@@ -13,11 +13,48 @@
 			$this->databaseInterface = $db->databaseInterface;
 		}
 
+		public function addAttributeHeading($array) {
+			
+			$qry = "INSERT INTO attribute_heading(HeadingText,IsActive) VALUES ('".$array['HeadingText']."','".$array['IsActive']."');";
+			$result = $this->databaseInterface->query($qry,true);
+			return $result['result'];
+
+		}
+
+		public function addAvailableAttribute($array) {
+
+
+			$qry = "INSERT INTO available_attribute(HeadingID,HeadingText,Label,strName,IsActive) VALUES ('".$array['HeadingID']."', '".$array['HeadingText']."','".$array['Label']."','".$array['strName']."','".$array['IsActive']."');";
+			$result = $this->databaseInterface->query($qry,true);
+			return $result['result'];
+
+
+		}
+
 		public function addProperty($array) {
+
 			$qry = "INSERT INTO property (CompanyID, Destination, Name, Summary, Details, UnitTypeID, BedroomsID, BathroomsID, GuestMax, Address1, Address2, City, Province, PostalCode, CountryId, YouTubeVideoCode, FloorPlanPDF, BaseRate, RateModeID, MinimumPeople, MinimumNights, external_id, IsActive, StatusID, date_added, last_updated) VALUES ('".$array['CompanyID']."','" .$array['Destination']."','" .$array['Name']."','".$array['Summary']."','".$array['Details']."'," .$array['UnitTypeID']."," .$array['BedroomsID']."," .$array['BathroomsID']."," .$array['GuestMax'].",'" .$array['Address1']."','" .$array['Address2']."','" .$array['City']."','" .$array['Province']."','" .$array['PostalCode']."','" .$array['CountryId']."','" .$array['YouTubeVideoCode']."','" .$array['FloorPlanPDF']."','" .$array['BaseRate']."',".$array['RateModeId'].",'" .$array['MinimumPeople']."'," .$array['MinimumNights']."," .$array['external_id'].",'" .$array['IsActive']."','" .$array['StatusID']."','" .$array['date_added']."','" .$array['last_updated']."');";
 
 			$result = $this->databaseInterface->query($qry,true);
 			return $result['result'];
+
+		}
+
+		public function addPropertyAttribute($array) {
+
+
+			$qry = "INSERT INTO property_attribute(PropertyID,AttributeID) VALUES ('".$array['PropertyID']."', '".$array['AttributeID']."');";
+			$result = $this->databaseInterface->query($qry,true);
+			return $result['result'];
+
+
+		}
+
+		public function addPropertyFeatures ($array) {
+
+			$qry = "INSERT INTO property_features(`PropertyID`, `ListOptionID`) VALUES ('".$array['PropertyID']."','" .$array['ListOptionID']."');";
+			$result = $this->databaseInterface->query($qry,true);
+			return $result;
 
 		}
 
@@ -32,7 +69,7 @@
 
 		public function addPropertyRateDate($array) {
 			
-			$qry = "INSERT INTO property_rate_date(PropertyID, external_id, StartDate, EndDate) VALUES ('".$array['PropertyID']."','" .$array['external_id']."','" .$array['StartDate']."','".$array['EndDate']."');";
+			$qry = "INSERT INTO property_rate_date(PropertyID, external_id, StartDate, EndDate, date_added, last_updated) VALUES ('".$array['PropertyID']."','" .$array['external_id']."','" .$array['StartDate']."','".$array['EndDate']."','".$array['date_added']."','".$array['last_updated']."');";
 
 			$result = $this->databaseInterface->query($qry,true);
 			return $result;
@@ -105,11 +142,17 @@
 
 		}
 
+		public function getHeading($key){
+			$qry = "SELECT * from attribute_heading where HeadingText LIKE '".$key."%';";
+			$result = $this->databaseInterface->query($qry,true);
+			return $result['result'][0];
+		}
+
 		public function getImages($array){
 
 			$qry = "SELECT * from property_photos where FileName = '".$array['FileName']."' and PropertyID = '".$array['PropertyID']."';";
 			$result = $this->databaseInterface->query($qry,true);
-			return $result;
+			return $result['result'];
 		}
 
 		public function getExternalIds($tableName) {
@@ -120,11 +163,44 @@
 
 		}
 
+		public function getLabel($label,$keyid) {
+			$qry = "SELECT * from available_attribute where Label LIKE '".$label."%' and HeadingID = '".$keyid."';";
+			$result = $this->databaseInterface->query($qry,true);
+			return $result['result'][0];
+		}
+
 		public function getLastUpdateDate($propertyId,$tableName) {
 			
-			$qry = "Select last_updated from ".$tableName." where external_id = ".$propertyId;
+			$qry = "SELECT last_updated from ".$tableName." where external_id = ".$propertyId;
 			$result = $this->databaseInterface->query($qry,true);
 			return $result;
+
+		}
+
+		public function getListOptionId($attribute) {
+
+			$qry = "SELECT id from list_option where StaticName='".$attribute."';";
+			$result = $this->databaseInterface->query($qry,true);
+			if(isset($result['result'][0]['id'])){
+				return $result['result'][0]['id'];
+			} 
+		}
+
+		public function getPlaceTypeAttribute($attribute, $key) {
+			$qry = "SELECT id from available_attribute where Label='".$attribute."' AND Heading = '".$key."';";
+			$result = $this->databaseInterface->query($qry,true);
+			if(isset($result['result'][0]['id'])) {
+				return $result['result'][0]['id'];
+			} 
+
+		}
+
+		public function getPropertyAttribute($attribute) {
+			$qry = "SELECT id from property_attribute where PropertyID='".$attribute['PropertyID']."' AND AttributeID = '".$attribute['AttributeID']."';";
+			$result = $this->databaseInterface->query($qry,true);
+			if(isset($result['result'][0]['id'])) {
+				return $result['result'][0]['id'];
+			} 
 
 		}
 
@@ -134,6 +210,13 @@
 			$result = $this->databaseInterface->query($qry,true);
 			return $result['result'][0]['ID'];
 
+		}
+
+		public function getPropertyFeatures($array){
+
+			$qry = "SELECT * from property_features where PropertyID = '".$array['PropertyID']."' and ListOptionID = '".$array['ListOptionID']."';";
+			$result = $this->databaseInterface->query($qry,true);
+			return $result;
 		}
 		
 		public function getUnitTypeId($param) {	

@@ -23,6 +23,7 @@
 				} else {
 					//Check if property updated
 					$propertyUpdated = $this->checkIfpropertyUpdated($listingArray[$i]['updateDate'],$listingArray[$i]['propertyId'],'property');
+					$propertyUpdated = true;
 					if($propertyUpdated) {
 						$newrecordsDescriptions= $this-> getPropertyDescription($listingArray[$i]['url']);
 						$this->mapPropertyRecords($newrecordsDescriptions,'existing');
@@ -66,9 +67,9 @@
 			$propertyModel = New Property();
 			//Get last update date of property
 			$date = $propertyModel->getLastUpdateDate($propertyId,$tableName);
-			$lastUpdateDate = str_replace("T"," ",$lastUpdatedDate);
+			$lastUpdateDate = str_replace("T"," ",$lastUpdatedDate); 
 			//Check if property is updated
-			if($lastUpdatedDate > $date) {
+			if($lastUpdatedDate > $date['result'][0]['last_updated']) {
 				return true;
 			}else{
 				return false;
@@ -203,6 +204,8 @@
 		   }elseif($listingType == "existing"){
 		   		$propertyModel->updateProperty($property,$property['external_id']); 
 		   }
+
+		   //Map Image
 		   for($i = 0; $i < count($listingArray['images']['image']); $i++){
 		   		$propertyPhotos['PropertyID'] =  $propertyId;
 		   		$propertyPhotos['FileName'] = $listingArray['images']['image'][$i]['uri'];
@@ -217,6 +220,101 @@
 		   		if(empty($existingImage['result'])) {
 		   			$propertyModel->addPropertyPhotos($propertyPhotos);
 		   		}	
+		   }
+
+		   //Add Property Attribute >> Featured Values
+		    for($i = 0; $i < count($listingArray['featureValues']['featureValue']); $i++){
+		   		$propertyFeature['PropertyID'] = $propertyId;;
+		   		
+		   		$attribute = $listingArray['featureValues']['featureValue'][$i]['listingFeatureName'];
+		   		//String conversion to map with Static Name of attribute
+		   		if(substr($attribute, 0, 14 ) == "LOCATION_TYPE_"){
+			   		$attribute =	ltrim(ltrim(str_replace("_"," ","$attribute"),'LOCATION'),'TYPE ');
+			   		$attribute = strtolower($attribute); 
+			   			if($attribute == "ocean front"){
+							$attribute = ucfirst($attribute);			
+						} else{
+							$attribute = ucwords($attribute);	
+						}
+			   		$attribute = str_replace(" ", "", $attribute)."ViewType";
+		   		}
+		   		//Check if this attribute exist in list option table and get attribute id
+		   		$listOptionId = $propertyModel->getListOptionId($attribute);
+		   		if(isset($listOptionId) && $listOptionId != Null){
+		   			$propertyFeature['ListOptionID'] = $listOptionId;
+		   			//check if features is alredy exist
+		   			$existingFeatures = $propertyModel->getPropertyFeatures($propertyFeature);
+		   			if(empty($existingFeatures['result'])){
+		   				$propertyModel->addPropertyFeatures($propertyFeature);
+		   			}
+		   		}
+		   }
+		   $attributeHeading = array();
+		   $availableAttribute = array();
+		   //Add property featured value 
+		   for($i = 0; $i < count($listingArray['units']['unit']['featureValues']['featureValue']); $i++) {
+		   		$unitFeatureName = $listingArray['units']['unit']['featureValues']['featureValue'][$i]['unitFeatureName'];
+		   		$unitFeatureName = str_replace("_", " ", $unitFeatureName);
+		   		$unitFeatureNameArray =  explode(' ',trim($unitFeatureName));
+		   		$key = array_shift($unitFeatureNameArray);
+		   		$label =  implode(" ", $unitFeatureNameArray);
+		   		//Check if key exist
+		   		$keyArray = $propertyModel->getHeading($key);
+		   		if(!empty($keyArray)){
+		   			$available_attribute['HeadingID'] = $keyArray['ID'];
+		   			$available_attribute['Heading'] = $keyArray['HeadingText'];
+		   		}else {
+		   			$attributeHeading['HeadingText'] = ucfirst(strtolower($key));
+		   			$attributeHeading['IsActive'] = 1;
+
+		   			$attribute_heading_id = $propertyModel->addAttributeHeading($attributeHeading);
+		   			$available_attribute['HeadingID'] = $attribute_heading_id;
+		   			$available_attribute['Heading'] = $key;
+		   		}
+		   		
+		   		$labelArray = $propertyModel->getLabel($label,$available_attribute['HeadingID']);
+		   		$propertyAttribute['AttributeID'] = $labelArray['ID'];
+
+		   		if(empty($labelArray)) {
+		   			$available_attribute['Label'] = ucfirst(strtolower($label));
+		   			$available_attribute['strName'] = $unitFeatureName;
+		   			$available_attribute['IsActive'] = 1;
+
+		   			$available_attribute_id = $propertyModel->addAvailableAttribute($available_attribute);
+		   			$propertyAttribute['AttributeID'] = $available_attribute_id;
+		   		}
+		   		$propertyAttribute['PropertyID'] = $propertyId;
+                // check if property attribute already exist
+		   		$propertyAttributeId = $propertyModel->getPropertyAttribute($propertyAttribute);
+
+		   		if(!isset($propertyAttributeId)){
+		   			$propertyModel->addPropertyAttribute($propertyAttribute);
+		   		}
+		   }
+
+
+		   //Add NearBy Places
+		   for($i=0; $i< count($listingArray['location']['nearestPlaces']['nearestPlace']); $i++){
+		   	$placeType = $listingArray['location']['nearestPlaces']['nearestPlace'][$i]['@attributes']['placeType'];
+		   	//check if place Type Exist
+		   	$placeTypeAttributeId= $propertyModel->getPlaceTypeAttribute($placeType,'Nearby');
+             $propertyAttribute['PropertyID'] = $propertyId;
+             $propertyAttribute['AttributeID'] = $placeTypeAttributeId;
+		   	if(!$placeTypeAttributeId) {
+		   		$placeTypeAttribute['HeadingID'] = 9;
+		   		$placeTypeAttribute['HeadingText'] = "Nearby";
+		   		$placeTypeAttribute['Label'] = $placeType;
+		   		$placeTypeAttribute['strName']= $placeType;
+		   		$placeTypeAttribute['IsActive'] = 1;
+		   		$addedPlaceTypeAttributeId = $propertyModel->addAvailableAttribute($placeTypeAttribute);
+		   		$propertyAttribute['AttributeID'] = $addedPlaceTypeAttributeId;
+		   	}
+		   	// check if property attribute already exist
+		   		$propertyAttributeId = $propertyModel->getPropertyAttribute($propertyAttribute);
+
+		   		if(!isset($propertyAttributeId)){
+		   			$propertyModel->addPropertyAttribute($propertyAttribute);
+		   		}
 		   }
 
 		}
@@ -236,12 +334,14 @@
 			    	$propertyRateDate['StartDate'] = $listingArray['lodgingRate']['nightlyRates']['nightlyOverrides']['override'][$i]['nights']['range'][0]['max'];
 			    	$propertyRateDate['EndDate'] =   $listingArray['lodgingRate']['nightlyRates']['nightlyOverrides']['override'][$i]['nights']['range'][$countDateRange - 1]['max'];
 			    }
+			    $propertyRateDate['date_added'] = date("Y-m-d h:i:s",time());
+		   		$propertyRateDate['last_updated'] = date("Y-m-d h:i:s",time());
 
 			    //Check if date range exist
 			    $dateRangeExist  = $propertyModel->getDateRange($propertyRateDate);
 			    if(empty($dateRangeExist['result'])) {
 			    	$added_id = $propertyModel->addPropertyRateDate($propertyRateDate); 
-			    	 $propertyRateDatePricing['PropertyRateDateID'] = $added_id['result'];
+			    	 $propertyRateDatePricing['PropertyRateDateID'] = $added_id['result'][0];
 			    	$propertyRateDatePricing['UpTo'] = 0;
 			    	$propertyRateDatePricing['Rate'] = $listingArray['lodgingRate']['nightlyRates']['nightlyOverrides']['override'][$i]['amount'];
 			    	$propertyModel->addPropertyRateDatePricing($propertyRateDatePricing); 
