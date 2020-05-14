@@ -14,7 +14,7 @@
 			//Get array with record_status like existing/new.
 			$listingArray = $this->checkRecordType($propertyListing,'property');
 			//for($i=0; $i = count($newListingArray); $i++) {
-			for($i=0; $i < 2; $i++) {
+			for($i=0; $i < 1; $i++) {
 				if($listingArray[$i]['record_status'] == "new"){
 					//Get new Records
 					$newrecordsDescriptions= $this-> getPropertyDescription($listingArray[$i]['url']);
@@ -32,11 +32,11 @@
 			}
 	         
 	     	//Get Rate Listing
-			$rateListing = $this-> getListing('https://www.condo-world.com/CIO/xmladvertiserLodgingRateContentIndex.ashx','lodgingRateContentIndexEntry','lodgingRateContentUrl','lastUpdatedDate');
+			/*$rateListing = $this-> getListing('https://www.condo-world.com/CIO/xmladvertiserLodgingRateContentIndex.ashx','lodgingRateContentIndexEntry','lodgingRateContentUrl','lastUpdatedDate');
 			//Get array with record_status like existing/new.
 			$rateListingArray = $this->checkRecordType($rateListing,'property_rate_date');
 			//for($i=0; $i = count($newListingArray); $i++) {
-			for($i=0; $i < 2; $i++) {
+			for($i=0; $i < 20; $i++) {
 				if($rateListingArray[$i]['record_status'] == "new"){
 					//Get new Records
 					$newrecordsDescriptions= $this-> getPropertyDescription($rateListingArray[$i]['url']);
@@ -50,7 +50,7 @@
 					}
 				}
 
-			}
+			}*/
 		}
 
 		public function callingApi($url) {
@@ -126,7 +126,6 @@
 		}
 
 		public function mapPropertyRecords($listingArray,$listingType) {
-		   $property['CompanyID'] = 76;
 		   $property['Destination'] =  $listingArray['adContent']['headline']['texts']['text']['textValue'];
 		   $property['Name'] = $listingArray['adContent']['propertyName']['texts']['text']['textValue'];
 		   if(is_array($listingArray['adContent']['accommodationsSummary']['texts']['text']['textValue']) && empty($listingArray['adContent']['accommodationsSummary']['texts']['text']['textValue'])){
@@ -143,6 +142,9 @@
 			}
 
 		   $propertyModel = new Property();
+		   //To get Company Id
+		   $property['CompanyID'] = $propertyModel->getCompanyId("Condo World");
+
 		   //To get unit type Id
 		   $unitType = $listingArray['units']['unit']['propertyType'];
 		   $unitTypeId = $propertyModel->getUnitTypeId($unitType);
@@ -205,9 +207,11 @@
 		   		$propertyModel->updateProperty($property,$property['external_id']); 
 		   }
 
+		   $propertyId = $propertyModel->getPropertyId($property['external_id']); 
+
 		   //Map Image
 		   for($i = 0; $i < count($listingArray['images']['image']); $i++){
-		   		$propertyPhotos['PropertyID'] =  $propertyId;
+		   		$propertyPhotos['PropertyID'] = $propertyId;
 		   		$propertyPhotos['FileName'] = $listingArray['images']['image'][$i]['uri'];
 		   		$propertyPhotos['SortOrder'] =  0;
 		   		if($i == 0){
@@ -217,9 +221,9 @@
 		   		}
 		   		//check if image exist & if not exist then add 
 		   		$existingImages = $propertyModel->getImages($propertyPhotos);
-		   		if(empty($existingImage['result'])) {
+		   		if(empty($existingImages)) {
 		   			$propertyModel->addPropertyPhotos($propertyPhotos);
-		   		}	
+		   		}
 		   }
 
 		   //Add Property Attribute >> Featured Values
@@ -302,7 +306,7 @@
              $propertyAttribute['AttributeID'] = $placeTypeAttributeId;
 		   	if(!$placeTypeAttributeId) {
 		   		$placeTypeAttribute['HeadingID'] = 9;
-		   		$placeTypeAttribute['HeadingText'] = "Nearby";
+		   		$placeTypeAttribute['Heading'] = "Nearby";
 		   		$placeTypeAttribute['Label'] = $placeType;
 		   		$placeTypeAttribute['strName']= $placeType;
 		   		$placeTypeAttribute['IsActive'] = 1;
@@ -320,7 +324,9 @@
 		}
 
 		public function mapRateRecords($listingArray,$listingType) {
+
 	        $rateIntervalCount = count($listingArray['lodgingRate']['nightlyRates']['nightlyOverrides']['override']);
+	        
 	        for($i=0; $i < $rateIntervalCount; $i++ ) {
 	        	$propertyRateDate['external_id'] = $listingArray['listingExternalId'];
 			    $propertyModel = new Property();
@@ -341,18 +347,31 @@
 			    $dateRangeExist  = $propertyModel->getDateRange($propertyRateDate);
 			    if(empty($dateRangeExist['result'])) {
 			    	$added_id = $propertyModel->addPropertyRateDate($propertyRateDate); 
-			    	 $propertyRateDatePricing['PropertyRateDateID'] = $added_id['result'][0];
+			    	$propertyRateDatePricing['PropertyRateDateID'] = $added_id['result'];
 			    	$propertyRateDatePricing['UpTo'] = 0;
 			    	$propertyRateDatePricing['Rate'] = $listingArray['lodgingRate']['nightlyRates']['nightlyOverrides']['override'][$i]['amount'];
 			    	$propertyModel->addPropertyRateDatePricing($propertyRateDatePricing); 
 			    } else {
-			    	$propertyRateDatePricing['PropertyRateDateID'] = $dateRangeExist['result']['id'];
+			    	$propertyRateDatePricing['PropertyRateDateID'] = $dateRangeExist['result'][0]['ID'];
 			    	$propertyRateDatePricing['UpTo'] = 0;
 			    	$propertyRateDatePricing['Rate'] = $listingArray['lodgingRate']['nightlyRates']['nightlyOverrides']['override'][$i]['amount'];
-
-			    	$propertyModel->upDatePropertyRateDatePricing($propertyRateDatePricing);
+			    	//check if property rate date pricing exist
+			    	 $dateRangePricingExist  = $propertyModel->getDateRangePricing($propertyRateDatePricing['PropertyRateDateID']);
+			    	 if(empty($dateRangePricingExist['result'])) {
+			    	 	$propertyModel->addPropertyRateDatePricing($propertyRateDatePricing);
+			    	 }else {
+			    	 	$propertyRateDatePricing['id'] = $dateRangePricingExist['result'][0]['ID'];
+			    		$propertyModel->upDatePropertyRateDatePricing($propertyRateDatePricing);
+			    	}
 			    }
 	        }
+
+	        //Add base rate & rate mode id
+	       if(isset($listingArray['lodgingRate']['nightlyRates']['nightlyOverrides'])) {
+				$property['RateModeID'] = 82;
+				$property['BaseRate'] = $listingArray['lodgingRate']['nightlyRates']['mon'];
+				$propertyModel->updatePropertyRate($property,$propertyRateDate['PropertyID']);
+			} 
 		}
 	}
 

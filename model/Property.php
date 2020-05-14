@@ -24,7 +24,7 @@
 		public function addAvailableAttribute($array) {
 
 
-			$qry = "INSERT INTO available_attribute(HeadingID,HeadingText,Label,strName,IsActive) VALUES ('".$array['HeadingID']."', '".$array['HeadingText']."','".$array['Label']."','".$array['strName']."','".$array['IsActive']."');";
+			$qry = "INSERT INTO available_attribute(HeadingID,Heading,Label,strName,IsActive) VALUES ('".$array['HeadingID']."', '".$array['Heading']."','".$array['Label']."','".$array['strName']."','".$array['IsActive']."');";
 			$result = $this->databaseInterface->query($qry,true);
 			return $result['result'];
 
@@ -37,6 +37,7 @@
 
 			$result = $this->databaseInterface->query($qry,true);
 			return $result['result'];
+
 
 		}
 
@@ -117,6 +118,22 @@
 			
 		}
 
+		public function getCompanyId($param) {	
+			$whereClause = 'WHERE Name = '."'".$param."'";
+			
+			if (isset($where)) 
+			{
+				$whereClause = "WHERE $where";
+			}
+			$qry = "SELECT ID
+					FROM company
+					$whereClause";
+			$result = $this->databaseInterface->query($qry,true);
+			return $result['result'][0]['ID'];
+			
+		}
+
+
 		public function getCountryId($param) {	
 			$whereClause = 'WHERE Name = '."'".$param."'";
 			
@@ -135,6 +152,15 @@
 
 		public function getDateRange($array) {
 			$qry = "Select * from property_rate_date where PropertyID = '".$array['PropertyID']."' AND StartDate ='".$array['StartDate']."'AND EndDate = '".$array['EndDate']."';";
+
+			$result = $this->databaseInterface->query($qry,true);
+			
+			return $result;
+
+		}
+
+		public function getDateRangePricing($id) {
+			$qry = "Select * from property_rate_date_pricing where PropertyRateDateID = '".$id."';";
 
 			$result = $this->databaseInterface->query($qry,true);
 			
@@ -220,7 +246,7 @@
 		}
 		
 		public function getUnitTypeId($param) {	
-			$whereClause = 'WHERE name = '."'".$param."'";
+			$whereClause = 'WHERE DisplayValue = '."'".$param."'";
 			
 			if (isset($where)) 
 			{
@@ -259,9 +285,19 @@
 						StatusID = '".$array['StatusID']."',
 						last_updated = '".$array['last_updated']."' 
 					where external_id = ".$id.";";
-			$result = $this->databaseInterface->query($qry,true);
+			$result = $this->databaseInterface->query($qry);
 			return $result;
 
+		}
+
+		public function updatePropertyRate($array,$key) {
+			$qry = "UPDATE property set 
+						BaseRate = '".$array['BaseRate']."', 
+						RateModeID ='".$array['RateModeID']."'
+						
+					where id = ".$key.";";
+			$result = $this->databaseInterface->query($qry);
+			return $result;
 		}
 
 		public function upDatePropertyRateDatePricing($array) {
@@ -271,8 +307,9 @@
 						UpTo ='".$array['UpTo']."', 
 						Rate ='".$array['Rate']."'
 						
-					where id = ".$array['id'].";";
-			$result = $this->databaseInterface->query($qry,true);
+					where id = ".$array['id'].";"; 
+
+			$result = $this->databaseInterface->query($qry);
 			return $result;
 		
 		}
