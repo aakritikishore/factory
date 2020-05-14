@@ -14,7 +14,7 @@
 			//Get array with record_status like existing/new.
 			$listingArray = $this->checkRecordType($propertyListing,'property');
 			//for($i=0; $i = count($newListingArray); $i++) {
-			for($i=0; $i < 1; $i++) {
+			for($i=0; $i < 2; $i++) {
 				if($listingArray[$i]['record_status'] == "new"){
 					//Get new Records
 					$newrecordsDescriptions= $this-> getPropertyDescription($listingArray[$i]['url']);
@@ -23,7 +23,6 @@
 				} else {
 					//Check if property updated
 					$propertyUpdated = $this->checkIfpropertyUpdated($listingArray[$i]['updateDate'],$listingArray[$i]['propertyId'],'property');
-					$propertyUpdated = true;
 					if($propertyUpdated) {
 						$newrecordsDescriptions= $this-> getPropertyDescription($listingArray[$i]['url']);
 						$this->mapPropertyRecords($newrecordsDescriptions,'existing');
@@ -32,11 +31,11 @@
 			}
 	         
 	     	//Get Rate Listing
-			/*$rateListing = $this-> getListing('https://www.condo-world.com/CIO/xmladvertiserLodgingRateContentIndex.ashx','lodgingRateContentIndexEntry','lodgingRateContentUrl','lastUpdatedDate');
+			$rateListing = $this-> getListing('https://www.condo-world.com/CIO/xmladvertiserLodgingRateContentIndex.ashx','lodgingRateContentIndexEntry','lodgingRateContentUrl','lastUpdatedDate');
 			//Get array with record_status like existing/new.
 			$rateListingArray = $this->checkRecordType($rateListing,'property_rate_date');
 			//for($i=0; $i = count($newListingArray); $i++) {
-			for($i=0; $i < 20; $i++) {
+			for($i=0; $i < 2; $i++) {
 				if($rateListingArray[$i]['record_status'] == "new"){
 					//Get new Records
 					$newrecordsDescriptions= $this-> getPropertyDescription($rateListingArray[$i]['url']);
@@ -50,7 +49,7 @@
 					}
 				}
 
-			}*/
+			}
 		}
 
 		public function callingApi($url) {
